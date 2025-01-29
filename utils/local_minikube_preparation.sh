@@ -15,7 +15,7 @@ fi
 readonly FULL_NAME=$1
 readonly FIRST_NAME_LETTER="${FULL_NAME:0:1}"
 readonly LAST_NAME="${FULL_NAME##* }"
-readonly USERNAME="${FIRST_NAME_LETTER,,}${LAST_NAME,,}"
+readonly USERNAME="$(echo "${FIRST_NAME_LETTER}${LAST_NAME}" | tr '[:upper:]' '[:lower:]')"
 
 readonly OLD_KUBE_CONTEXT=$(kubectl config current-context)
 kubectl config use-context minikube
