@@ -33,7 +33,7 @@ The first step of deploying the application is building Docker images and publis
 
 Application source code is placed in **application** directory.
 
-You need to fix *Dockerfile* so that Docker image complyes with the following requirements:
+You need to prepare *Dockerfile* so that Docker image complyes with the following requirements:
 
 - No Hashell Dockerfile linter errors and/or warnings 
 - Docker image name is `<nsurname>_application`
@@ -78,7 +78,7 @@ $ hadolint Dockerfile # no issues
 How to create a private repository: [Documentation](https://docs.docker.com/docker-hub/repos/#private-repositories)
 
 
-### Test: Docker Compose Deployment
+### Test: Docker Compose Deployment (optional)
 
 The second step is that verify that your application can be deployed as Docker container.
 
@@ -106,7 +106,7 @@ Now you can deploy your application on the local PC and check how it works.
 - data can be written to MongoDB on *Test DB Connectivity* page
 
 
-### Deployment Preparation 
+### Deployment Preparation (mandatory)
 
 The next step is preparing Kubernetes manifest **manifest.yml** and deploy it to *local* Kubernetes.
 
@@ -190,7 +190,7 @@ ingress-nginx-admission-patch--1-cnx7n      0/1     Completed   0          2m26s
 ingress-nginx-controller-69bdbc4d57-f7lfz   1/1     Running     0          2m26s
 ```
 
-#### Local Kubernetes Environment Preparation
+#### Local Kubernetes Environment Preparation (mandatory)
 
 To simulate **Production** environment, you need to create
 and configure your personal namespace in the local cluster.
