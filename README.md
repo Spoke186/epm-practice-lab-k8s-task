@@ -5,7 +5,7 @@ We are glad to see you here!
 During this course you will become familiar with a lot of tools and technologies. We would like you to apply this knowledge in practice, otherwise it would be boring. There is a task for you, which you can do along with stydying materials from this course. So, without further adieu, let's begin this task!
 
 **Be aware:**
-Don't make any changes not in **manifest.yml** file. It can break test logic.
+Don't make any changes not in the **Application** folder. It can break test logic.
 
 # Description
 
