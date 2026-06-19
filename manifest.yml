@@ -10,6 +10,7 @@ data:
   MONGO_HOST: mongo
   MONGO_PORT: "27017"
   BG_COLOR: teal
+  FAIL_FLAG: "false"
 ---
 # Secret — MongoDB root credentials (Opaque, base64-encoded)
 apiVersion: v1
