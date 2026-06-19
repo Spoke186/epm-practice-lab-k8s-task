@@ -1,11 +1,19 @@
-FROM python:3.9.7
+FROM python:3.9.7-slim
 
-ENTRYPOINT /app
+ENV FLASK_APP=app.py \
+    PYTHONUNBUFFERED=1
 
-COPY requirements.txt requirements.txt
+WORKDIR /app
+
+COPY requirements.txt ./
 
 RUN pip3 install --no-cache-dir --requirement requirements.txt
 
 COPY . .
 
-CMD ["python3", "-m" , "flask", "run", "--host=8.8.8.8"]
+RUN useradd --create-home --uid 1001 appuser
+USER appuser
+
+EXPOSE 5000
+
+CMD ["flask", "run", "--host=0.0.0.0", "--port=5000"]

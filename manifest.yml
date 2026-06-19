@@ -1,1 +1,169 @@
-# Add all your manifests here
+---
+# RESOURCE 1 — MongoDB (data tier)
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: mongo
+  labels:
+    app: mongo
+spec:
+  serviceName: mongo
+  replicas: 1
+  selector:
+    matchLabels:
+      app: mongo
+  template:
+    metadata:
+      labels:
+        app: mongo
+    spec:
+      containers:
+        - name: mongo
+          image: mongo:6.0
+          ports:
+            - containerPort: 27017
+          envFrom:
+            - secretRef:
+                name: mongo
+          resources:
+            requests:
+              cpu: "0.2"
+              memory: "128Mi"
+            limits:
+              cpu: "0.5"
+              memory: "256Mi"
+          volumeMounts:
+            - name: data
+              mountPath: /data/db
+  volumeClaimTemplates:
+    - metadata:
+        name: data
+      spec:
+        accessModes: ["ReadWriteOnce"]
+        resources:
+          requests:
+            storage: 1Gi
+---
+# RESOURCE 2 — MongoDB Service (stable DNS name "mongo")
+apiVersion: v1
+kind: Service
+metadata:
+  name: mongo
+  labels:
+    app: mongo
+spec:
+  type: ClusterIP
+  selector:
+    app: mongo
+  ports:
+    - port: 27017
+      targetPort: 27017
+---
+# RESOURCE 3 — Flask app (application tier)
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: application
+  labels:
+    app: application
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app: application
+  template:
+    metadata:
+      labels:
+        app: application
+    spec:
+      imagePullSecrets:
+        - name: docker-secret
+      initContainers:
+        - name: wait-for-mongo
+          image: busybox:1.36
+          command:
+            - sh
+            - -c
+            - |
+              echo "waiting for mongo:27017...";
+              until nc -z mongo 27017; do
+                echo "mongo not ready, retrying in 2s";
+                sleep 2;
+              done;
+              echo "mongo is up";
+      containers:
+        - name: application
+          image: spoke186/emunoz_application:latest
+          ports:
+            - containerPort: 5000
+          envFrom:
+            - configMapRef:
+                name: application
+          env:
+            - name: MONGO_USERNAME
+              valueFrom:
+                secretKeyRef:
+                  name: mongo
+                  key: MONGO_INITDB_ROOT_USERNAME
+            - name: MONGO_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: mongo
+                  key: MONGO_INITDB_ROOT_PASSWORD
+          resources:
+            requests:
+              cpu: "0.2"
+              memory: "64Mi"
+            limits:
+              cpu: "0.5"
+              memory: "128Mi"
+          livenessProbe:
+            httpGet:
+              path: /healthz
+              port: 5000
+            initialDelaySeconds: 10
+            periodSeconds: 10
+            timeoutSeconds: 3
+          readinessProbe:
+            httpGet:
+              path: /healthx
+              port: 5000
+            initialDelaySeconds: 5
+            periodSeconds: 10
+            timeoutSeconds: 5
+---
+# RESOURCE 4 — Flask app Service (80 -> 5000)
+apiVersion: v1
+kind: Service
+metadata:
+  name: application
+  labels:
+    app: application
+spec:
+  type: ClusterIP
+  selector:
+    app: application
+  ports:
+    - port: 80
+      targetPort: 5000
+---
+# RESOURCE 5 — Ingress (presentation tier)
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: nginx
+spec:
+  ingressClassName: nginx
+  rules:
+    - host: emunoz.application.com
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: application
+                port:
+                  number: 80
